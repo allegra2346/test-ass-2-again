@@ -1,0 +1,32 @@
+<head>
+    <title>Booking Cancelled</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+
+</head>
+
+<body>
+    <h1>We'll miss you {{ first_name }}! </h1>
+    <h3>Your booking for {{ room_name }} on {{ selected_date }} from {{ start_time[:-3] }} to {{ end_time[:-3] }} has
+        been cancelled.</h3>
+    <br>
+    <a class="button" href='/dashboard'>Go back home</a>
+    <a class="button logout" href='/logout'>Logout</a>
+    <a class="button my-bookings" href='/my-bookings'>My Bookings</a>
+    <a class="button home" href='/dashboard'>Home</a>
+
+
+
+
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+
+        for (i = 0; i < close.length; i++) {
+            close[i].onclick = function () {
+                var div = this.parentElement;
+                div.style.opacity = "0";
+                setTimeout(function () { div.style.display = "none"; }, 600);
+            }
+        }
+    </script>
+</body>

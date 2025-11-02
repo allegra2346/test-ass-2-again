@@ -1,0 +1,31 @@
+<head>
+    <title>Room {{ room_name }}</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+
+</head>
+<body>
+    <h1>Thanks {{ first_name }}! You are now checked into room {{ room_name }}. </h1>
+    <h3>You can use this room from {{ start_time[:-3] }} until {{ end_time[:-3] }}.</h3>
+    <form id="check_out_form" method="POST" action="/check-out">
+        <input type="hidden" name="room_id" id="hidden_room_id" value ="{{ room_id }}" style="display:none;">
+        <input type="hidden" name="room_name" id="hidden_room_name" value ="{{ room_name }}" style="display:none;">
+        <input type="hidden" name="reason" id="hidden_reason" value ="checked_out" style="display:none;">
+        <button type="submit">Check out</button>
+    </form>
+
+    <script>
+        const endTime = new Date("{{ selected_date }}T{{ end_time }}");
+        const now = new Date();
+        const msUntilEnd = endTime - now;
+        const reason = document.querySelector('input[name="reason"]');
+
+
+        if (msUntilEnd > 0) {
+            setTimeout(() => {
+                reason.value = 'timed_out'
+                document.getElementById('check_out_form').submit();
+            }, msUntilEnd);
+        }
+    </script>
+
+</body>

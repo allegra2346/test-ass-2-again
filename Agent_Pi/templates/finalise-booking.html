@@ -1,0 +1,111 @@
+<head>
+    <title>Finalise Booking</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert">
+                    <span class="closebtn">&times;</span>  
+                    <strong>Error:</strong> {{ message }}
+                </div>            
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <h2>Create Account</h2>
+    <h1>Confirm Booking Details</h1>
+    <h2>Room: {{ room_name }} </h2>
+    <h2>Start time: {{ selected_slot[:-3] }} </h2>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="end_time">
+            <h2 style="margin-top: 0px; margin-bottom: 0px;">End time:</h2>
+        </label>
+        <select id="end_time" name="end_time" style="font-size: 1.1em; padding: 5px;"></select>
+    </div>
+    <br>
+    <a class="button logout" href='/logout'>Logout</a>
+    <a class="button my-bookings" href='/my-bookings'>My Bookings</a>
+    <a class="button home" href='/dashboard'>Home</a>
+
+
+    <form id="book_room_form" method="POST" action="/book-room">
+        <input type="hidden" name="selected_date" id="hidden_date" value ="{{ selected_date }}" style="display:none;">
+        <input type="hidden" name="start_time" id="hidden_start" value ="{{ selected_slot }}" style="display:none;">
+        <input type="hidden" name="end_time" id="hidden_end" style="display:none;">
+        <input type="hidden" name="room_id" id="hidden_room_id" value ="{{ room_id }}" style="display:none;">
+        <input type="hidden" name="room_name" id="hidden_room_name" value ="{{ room_name }}" style="display:none;">
+
+        <button type="submit">Book</button>
+    </form>
+    <br>
+    <button onclick="history.back()">Go back</button>
+
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+
+        for (i = 0; i < close.length; i++) {
+        close[i].onclick = function(){
+            var div = this.parentElement;
+            div.style.opacity = "0";
+            setTimeout(function(){ div.style.display = "none"; }, 600);
+        }
+        }
+        const startSlot = "{{ selected_slot }}";  
+        const room_availabilities = {{ resp.availabilities | tojson | safe }};
+        const endTime = document.getElementById("end_time");
+        console.log("DEBUG availabilities:", room_availabilities);
+
+        const slots = Object.keys(room_availabilities).sort();
+        const startIndex = slots.indexOf(startSlot);
+        let reachedEnd = false;
+
+        if (startIndex === -1) {
+            console.error("Start slot not found in availabilities.");
+        } else {
+            if (startSlot === "17:00:00" && room_availabilities[startSlot] === "available") {
+                const option = document.createElement("option");
+                option.value = "18:00:00";
+                option.textContent = "18:00";
+                endTime.appendChild(option);
+            } else {
+                for (let i = startIndex + 1; i < slots.length; i++) {
+                    const time = slots[i];
+                    const status = room_availabilities[time];
+
+                    const option = document.createElement("option");
+                    option.value = time;
+                    option.textContent = time.slice(0, 5);
+                    endTime.appendChild(option);
+
+                    if (status === "occupied") {
+                        reachedEnd = false;
+                        break;
+                    }
+                    if (i === slots.length - 1) {
+                        reachedEnd = true;
+                    }
+                }
+                if (reachedEnd) {
+                    const option = document.createElement("option");
+                    option.value = "18:00:00";
+                    option.textContent = "18:00";
+                    endTime.appendChild(option);
+                }
+            }
+        }
+        if (endTime.options.length > 0) {
+            endTime.options[0].selected = true;
+        }
+        const hiddenEnd = document.getElementById("hidden_end");
+
+        endTime.addEventListener("change", function() {
+        hiddenEnd.value = this.value;
+        });
+        if (endTime.options.length > 0) {
+            endTime.options[0].selected = true;
+            hiddenEnd.value = endTime.options[0].value;
+        }
+    </script>
+</body>

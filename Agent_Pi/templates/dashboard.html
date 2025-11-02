@@ -1,0 +1,133 @@
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert">
+                    <span class="closebtn">&times;</span>  
+                    <strong>Error:</strong> {{ message }}
+                </div>            
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <h2>Create Account</h2>
+    <h1>Booking Dashboard</h1>
+    <h2>Welcome, {{ first_name }} </h2>
+    <a class="button logout" href='/logout'>Logout</a>
+    <a class="button my-bookings" href='/my-bookings'>My Bookings</a>
+    <a class="button home" href='/dashboard'>Home</a>
+
+
+    <br>
+    <h3>Find a room </h4>
+    <span>
+        <form method="POST", action= "/dashboard">
+            <label for="date-picker" value="">Select a date</label>
+            {% if selected_date %}
+                <input type="date" id="date_picker" name="date_picker" value="{{ selected_date }}">
+            {% else %}
+                <input type="date" id="date_picker" name="date_picker">
+
+            {% endif %}
+            <button type="submit">Search</button>
+        </form>
+    </span>
+    {% if resp %}
+        {% if resp.status == 'ok' %}
+            <div class="container">
+                {% for room in resp.rooms %}
+                    <div>{{ room.name }}
+                        <div class="sub-container">
+                            {% for avail in room.availabilities %}
+                                {% if avail.status == 'occupied' %}
+                                    <input id="{{ room.room_id }} {{ selected_date }} {{ avail.slot }}" name="time_selection" type="radio" class="time_slot" value="{{ avail.slot }}" data-roomname="{{ room.name }}" disabled>
+                                    <label for="{{ room.room_id }} {{ selected_date }} {{ avail.slot }}" class="time_label" >{{ avail.slot[:-3] }}</label>
+                                {% else %}
+                                    <input id="{{ room.room_id }} {{ selected_date }} {{ avail.slot }}" name="time_selection" type="radio" class="time_slot" value="{{ avail.slot }}" data-roomname="{{ room.name }}">
+                                    <label for="{{ room.room_id }} {{ selected_date }} {{ avail.slot }}" class="time_label" >{{ avail.slot[:-3] }}</label>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>    
+        {% else %}
+            <p style="color:red;">Error: {{ resp.reason }}</p>
+        {% endif %}
+    {% endif %}
+    <form id="next_page" method="POST" action="/finalise-booking" style="display:none;">
+        <input type="hidden" name="selected_date" id="hidden_date" value="{{ selected_date }}">
+        <input type="hidden" name="selected_slot" id="hidden_slot">
+        <input type="hidden" name="room_name" id="hidden_room_name">
+        <input type="hidden" name="room_id" id="hidden_room_id">
+    </form>
+    
+    <div style="text-align: center;">
+        <button id="next_button" style="display: none;">Next</button>
+    </div>
+    
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+
+        for (i = 0; i < close.length; i++) {
+            close[i].onclick = function () {
+                var div = this.parentElement;
+                div.style.opacity = "0";
+                setTimeout(function () { div.style.display = "none"; }, 600);
+            }
+        }
+        const datePicker = document.getElementById('date_picker');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayFormatted = `${year}-${month}-${day}`;
+        const nextButton = document.getElementById('next_button');
+        const timeSelection = document.querySelectorAll('input[name="time_selection"]');
+        const hiddenDate = document.getElementById('hidden_date');
+        const hiddenSlot = document.getElementById('hidden_slot');
+        const hiddenRoomID = document.getElementById('hidden_room_id');
+        const hiddenRoomName = document.getElementById('hidden_room_name');
+
+
+        datePicker.setAttribute('min', todayFormatted);
+        if (!datePicker.value) {
+            datePicker.value = todayFormatted;
+        }
+
+        let selectedSlot = null;
+        timeSelection.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.checked) {
+                    selectedSlot = this.value;
+                    const roomId = this.id.split(" ")[0];
+                    hiddenRoomID.value = roomId;
+                    hiddenSlot.value = selectedSlot;
+                    hiddenRoomName.value = this.dataset.roomname;
+                    nextButton.style.display = 'block';
+                }
+
+            });
+        });
+
+        nextButton.addEventListener('click', function () {
+            if (hiddenDate && hiddenSlot && hiddenRoomID) {
+                document.getElementById('next_page').submit();
+            }
+        });
+        document.querySelectorAll('input[name="time_selection"]').forEach(radio => {
+            if (radio.checked) {
+                nextButton.style.display = 'block';
+            }
+        });
+
+
+
+
+
+    </script>
+</body>

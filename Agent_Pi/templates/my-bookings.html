@@ -1,0 +1,153 @@
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'error' %}
+                    <div class="alert">
+                        <span class="closebtn">&times;</span>  
+                        <strong>Error:</strong> {{ message }}
+                    </div>  
+                {% else %}
+                    <div class="alert info">
+                        <span class="closebtn">&times;</span>  
+                        {{ message }}
+                    </div>  
+                {% endif %}
+
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1>My Bookings</h1>
+    <a class="button logout" href='/logout'>Logout</a>
+    <a class="button my-bookings" href='/my-bookings'>My Bookings</a>
+    <a class="button home" href='/dashboard'>Home</a>
+
+    <br>
+
+
+
+    <div class="collapsible">
+        <h2 class="collapsible-header">Past Bookings</h2>
+    </div>
+    <div class="content">
+    {% set ns = namespace(has_expired=false) %}
+    {% for booking_id, booking in resp.my_bookings.items() %}
+        {% if booking.status == 'expired' %}
+            {% set ns.has_expired = true %}
+            <h3>{{ booking["room_name"] }} - {{ booking["date"] }} from {{ booking["start_time"][:-3] }} to {{ booking["end_time"][:-3] }}</h3>
+        {% endif %}
+    {% endfor %}
+    {% if not ns.has_expired %}
+        <h3>No past bookings found.</h3>
+    {% endif %}
+    </div>
+    <br>
+    <div class="header">
+        <h2>Ongoing Bookings</h2>
+    </div>
+    <div class="content-static">
+        {% set ns = namespace(is_ongoing=false) %}
+        {% for booking_id, booking in resp.my_bookings.items() %}
+            {% if booking.status == 'ongoing' %}
+                {% set ns.is_ongoing = true %}
+                {% if booking.room_status == 'available' %}
+                    <form style="display: flex; align-items: center; gap: 10px;" method="POST" action="/check-in" >
+                        <h3>{{ booking["room_name"] }} - {{ booking["date"] }} from {{ booking["start_time"][:-3] }} to {{ booking["end_time"][:-3] }}</h3>
+                        <input id="hidden_booking_id" name="booking_id" value="{{ booking_id }}" style="display: none;" required>
+                        <input id="hidden_room_name" name="room_name" value="{{ booking['room_name'] }}" style="display: none;" required>
+                        <input id="hidden_room_id" name="room_id" value="{{ booking['room_id'] }}" style="display: none;" required>
+                        <input id="hidden_date" name="date" value="{{ booking['date'] }}" style="display: none;" required>
+                        <input id="hidden_start_time" name="start_time" value="{{ booking['start_time'] }}" style="display: none;" required>
+                        <input id="hidden_end_time" name="end_time" value="{{ booking['end_time'] }}" style="display: none;" required>
+                        <button type="submit">Check In</button>
+                    </form>    
+                {% elif booking.room_status == 'down' %}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3>{{ booking["room_name"] }} - {{ booking["date"] }} from {{ booking["start_time"][:-3] }} to {{ booking["end_time"][:-3] }}</h3>
+                        <button disabled>Room Down</button>
+                    </div>
+                {% else %}
+                    <form style="display: flex; align-items: center; gap: 10px;" method="POST" action="/check-out" >
+                        <h3>{{ booking["room_name"] }} - {{ booking["date"] }} from {{ booking["start_time"][:-3] }} to {{ booking["end_time"][:-3] }}</h3>
+                        <input type="hidden" name="room_id" id="hidden_room_id" value ="{{ booking['room_id']}}" style="display:none;">
+                        <input type="hidden" name="room_name" id="hidden_room_name" value ="{{ booking['room_name'] }}" style="display:none;">
+                        <input type="hidden" name="reason" id="hidden_reason" value ="checked_out" style="display:none;">
+                        <button type="submit">Check Out</button>
+                    </form>    
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if not ns.is_ongoing %}
+            <h3>No ongoing bookings found.</h3>
+        {% endif %}
+    </div>
+    <br>
+    <div class="header">
+        <h2>Upcoming Bookings</h2>
+    </div>
+    <div class="content-static">
+        {% set ns = namespace(is_upcoming=false) %}
+        {% for booking_id, booking in resp.my_bookings.items() %}
+            {% if booking.status == 'valid' %}
+                {% set ns.is_upcoming = true %}
+                <form style="display: flex; align-items: center; gap: 10px;" method="POST" action="/cancel-booking" >
+                    <h3>{{ booking["room_name"] }} - {{ booking["date"] }} from {{ booking["start_time"][:-3] }} to {{ booking["end_time"][:-3] }}</h3>
+                    <input id="hidden_booking_id" name="booking_id" value="{{ booking_id }}" style="display: none;" required>
+                    <input id="hidden_room_name" name="room_name" value="{{ booking['room_name'] }}" style="display: none;" required>
+                    <input id="hidden_date" name="date" value="{{ booking['date'] }}" style="display: none;" required>
+                    <input id="hidden_start_time" name="start_time" value="{{ booking['start_time'] }}" style="display: none;" required>
+                    <input id="hidden_end_time" name="end_time" value="{{ booking['end_time'] }}" style="display: none;" required>
+                    <button type="submit">Cancel</button>
+                </form>          
+            {% endif %}
+        {% endfor %}
+        {% if not ns.is_upcoming %}
+            <h3>No upcoming bookings found.</h3>
+        {% endif %}
+    </div>
+    
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+
+        for (i = 0; i < close.length; i++) {
+        close[i].onclick = function(){
+            var div = this.parentElement;
+            div.style.opacity = "0";
+            setTimeout(function(){ div.style.display = "none"; }, 600);
+        }
+        }
+
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+            content.style.display = "none";
+            } else {
+            content.style.display = "block";
+            }
+        });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const expanderButton = document.querySelector('.expander-button');
+            const collapsibleContent = document.getElementById('collapsibleContent');
+
+            expanderButton.addEventListener('click', () => {
+                const isExpanded = expanderButton.getAttribute('aria-expanded') === 'true';
+                expanderButton.setAttribute('aria-expanded', !isExpanded);
+                collapsibleContent.hidden = isExpanded;
+            });
+        });
+    </script>
+</body>

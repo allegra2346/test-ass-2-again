@@ -1,0 +1,57 @@
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" href="/static/assets/css/styles.css">
+
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "error"}
+                    <div class="alert">
+                        <span class="closebtn">&times;</span>  
+                        <strong>Error:</strong> {{ message }}
+                    </div>       
+                {% else %}     
+                    <div class="alert success">
+                        <span class="closebtn">&times;</span>  
+                        <strong>Success:</strong> {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <h2>Create Account</h2>
+
+    <form method="POST">
+        <label>Full name:</label><br>
+        <input name="full_name" required><br><br>
+
+        <label>Student ID:</label><br>
+        <input name="student_id" required><br><br>
+
+        <label>Email:</label><br>
+        <input name="user_email" type="email" required><br><br>
+
+        <label>Password:</label><br>
+        <input name="user_password" type="password" required><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Login</a></p>
+
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+
+        for (i = 0; i < close.length; i++) {
+            close[i].onclick = function(){
+                var div = this.parentElement;
+                div.style.opacity = "0";
+                setTimeout(function(){ div.style.display = "none"; }, 600);
+            }
+        }
+    </script>
+
+</body>
